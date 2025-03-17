@@ -20,25 +20,33 @@ bool SuperPoint::build() {
     if(deserialize_engine()){
         return true;
     }
+    // 创建构建器
     auto builder = TensorRTUniquePtr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(gLogger.getTRTLogger()));
     if (!builder) {
         return false;
     }
+
+    // 创建网络定义
     const auto explicit_batch = 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
     auto network = TensorRTUniquePtr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicit_batch));
     if (!network) {
         return false;
     }
+
+    // 配置构建器
     auto config = TensorRTUniquePtr<nvinfer1::IBuilderConfig>(builder->createBuilderConfig());
     if (!config) {
         return false;
     }
+
+    // 创建解析器
     auto parser = TensorRTUniquePtr<nvonnxparser::IParser>(
             nvonnxparser::createParser(*network, gLogger.getTRTLogger()));
     if (!parser) {
         return false;
     }
-    
+
+    // 创建优化配置
     auto profile = builder->createOptimizationProfile();
     if (!profile) {
         return false;
@@ -51,27 +59,38 @@ bool SuperPoint::build() {
                            nvinfer1::OptProfileSelector::kMAX, nvinfer1::Dims4(1, 1, 1500, 1500));
     config->addOptimizationProfile(profile);
     
+    // 构建网络
     auto constructed = construct_network(builder, network, config, parser);
     if (!constructed) {
         return false;
     }
+
+    // 创建cuda流
     auto profile_stream = makeCudaStream();
     if (!profile_stream) {
         return false;
     }
     config->setProfileStream(*profile_stream);
+    
+    // 构建序列化网络
     TensorRTUniquePtr<nvinfer1::IHostMemory> plan{builder->buildSerializedNetwork(*network, *config)};
     if (!plan) {
         return false;
     }
+
+    // 创建runtime
     TensorRTUniquePtr<nvinfer1::IRuntime> runtime{nvinfer1::createInferRuntime(gLogger.getTRTLogger())};
     if (!runtime) {
         return false;
     }
+
+    // 创建反序列化cuda引擎
     engine_ = std::shared_ptr<nvinfer1::ICudaEngine>(runtime->deserializeCudaEngine(plan->data(), plan->size()));
     if (!engine_) {
         return false;
     }
+
+    // 保存引擎
     save_engine();
     ASSERT(network->getNbInputs() == 1);
     input_dims_ = network->getInput(0)->getDimensions();
