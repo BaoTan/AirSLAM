@@ -62,6 +62,9 @@ challenges. Our system adopts a hybrid approach that combines deep learning tech
 ```bash
 docker pull xukuanhit/air_slam:v4
 docker run -it --env DISPLAY=$DISPLAY --volume /tmp/.X11-unix:/tmp/.X11-unix --privileged --runtime nvidia --gpus all --volume ${PWD}:/workspace --workdir /workspace --name air_slam xukuanhit/air_slam:v4 /bin/bash
+
+# 挂载到catkin_ws/src下
+docker run -it --env DISPLAY=$DISPLAY --volume /tmp/.X11-unix:/tmp/.X11-unix --privileged --runtime nvidia --gpus all --volume ${PWD}:/catkin_ws/src/airslam --workdir /catkin_ws/src/airslam --name air_slam xukuanhit/air_slam:v4 /bin/bash
 ```
 
 ## :book: Data

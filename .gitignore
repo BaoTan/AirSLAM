@@ -11,5 +11,6 @@ data/*
 model/*
 weights/*
 debug/*
+prj_output
 *.so
 */__pycache__/*
