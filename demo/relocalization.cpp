@@ -45,6 +45,12 @@ int main(int argc, char **argv) {
     cv::Mat image = cv::imread(ConcatenateFolderAndFileName(configs.dataroot, image_names[i]), 0);
     Eigen::Matrix4d pose = Eigen::Matrix4d::Identity();
     size_t pos = image_names[i].find_last_of('.');
+
+    // paco
+    double time_double = ImageNameToTime(image_names[i]);
+    std::string time_str = std::to_string(time_double);
+    // paco
+
     std::string image_idx = "fail " + image_names[i].substr(0, pos);
 
     auto before_infer = std::chrono::high_resolution_clock::now();
@@ -56,7 +62,8 @@ int main(int argc, char **argv) {
     auto cost_time = std::chrono::duration_cast<std::chrono::milliseconds>(after_infer - before_infer).count();
     std::cout << "One Frame Processinh Time: " << cost_time << " ms." << std::endl;
 
-    trajectory.emplace_back(std::make_pair(image_idx, pose));
+    // trajectory.emplace_back(std::make_pair(image_idx, pose));
+    trajectory.emplace_back(std::make_pair(time_str, pose));
   }
 
   SaveTumTrajectoryToFile(traj_path, trajectory);
