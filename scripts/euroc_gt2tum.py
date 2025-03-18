@@ -22,7 +22,7 @@ with open(input_csv, 'r', newline='') as csvfile, open(output_txt, 'w') as txtfi
         # 从行中提取时间戳（纳秒）
         timestamp_ns = int(row[0])
         # 将时间戳从纳秒转换为秒
-        timestamp_s = timestamp_ns / 1e9
+        timestamp_s = round(timestamp_ns / 1e9, 6)
         # 提取位置信息
         px = row[1]
         py = row[2]
