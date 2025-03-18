@@ -82,7 +82,9 @@ void MapBuilder::ExtractFeatureThread(){
     FrameType frame_type;
     if(!_init || _insert_next_keyframe){
       Eigen::Matrix<float, 259, Eigen::Dynamic> junctions;
+      // 普通帧左右图像使用plnet提取点、线
       _feature_detector->Detect(image_left_rect, image_right_rect, left_features, right_features, left_lines, right_lines, junctions);
+      // 使用lightglue匹配左右相机的点特征
       _point_matcher->MatchingPoints(left_features, right_features, stereo_matches, false);
       frame->AddLeftFeatures(left_features, left_lines);
       good_stereo_point = frame->AddRightFeatures(right_features, right_lines, stereo_matches);
@@ -91,19 +93,22 @@ void MapBuilder::ExtractFeatureThread(){
       frame->AddJunctions(junctions);
       // SaveLineDetectionResult(image_left_rect, left_lines, _configs.saving_dir, std::to_string(frame->GetFrameId()));
     }else{
-      _feature_detector->Detect(image_left_rect, left_features);
+      _feature_detector->Detect(image_left_rect, left_features);//普通帧只是提取左图的superpoint点
       frame->AddLeftFeatures(left_features, left_lines);
       frame_type = FrameType::NormalFrame;
     }
 
     if(_init){
       const Eigen::Matrix<float, 259, Eigen::Dynamic> features_last_keyframe = _last_keyframe_feature->GetAllFeatures();
+      // 使用lightglue匹配关键帧和当前帧的特征点
       _point_matcher->MatchingPoints(features_last_keyframe, left_features, matches, true);
+      // 使用几何效验关键帧到当前帧的匹配
       int enough_match = AddKeyframeCheck(_last_keyframe_feature, frame, matches);
 
       if(enough_match == 0){  // try to insert this frame as keyframe
         if(frame_type == FrameType::NormalFrame){
-          _feature_detector->Detect(image_right_rect, right_features);
+          // 如果是普通帧，继续提取右图superpoint特征，然后用lightglue进行匹配
+          _feature_detector->Detect(image_right_rect, right_features); // 只是提取右图的superpoint点
           _point_matcher->MatchingPoints(left_features, right_features, stereo_matches, false);
           good_stereo_point = frame->AddRightFeatures(right_features, right_lines, stereo_matches);
         }

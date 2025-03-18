@@ -33,20 +33,21 @@ bool SuperPoint::build() {
         return false;
     }
 
+    // 创建解析器
+    auto parser =
+        TensorRTUniquePtr<nvonnxparser::IParser>(nvonnxparser::createParser(*network, gLogger.getTRTLogger()));
+    if (!parser)
+    {
+        return false;
+    }
+
     // 配置构建器
     auto config = TensorRTUniquePtr<nvinfer1::IBuilderConfig>(builder->createBuilderConfig());
     if (!config) {
         return false;
     }
 
-    // 创建解析器
-    auto parser = TensorRTUniquePtr<nvonnxparser::IParser>(
-            nvonnxparser::createParser(*network, gLogger.getTRTLogger()));
-    if (!parser) {
-        return false;
-    }
-
-    // 创建优化配置
+    /* 创建优化配置 */
     auto profile = builder->createOptimizationProfile();
     if (!profile) {
         return false;
@@ -65,7 +66,7 @@ bool SuperPoint::build() {
         return false;
     }
 
-    // 创建cuda流
+    /* 创建cuda流 */
     auto profile_stream = makeCudaStream();
     if (!profile_stream) {
         return false;
